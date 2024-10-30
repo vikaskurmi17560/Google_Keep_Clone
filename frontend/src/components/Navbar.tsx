@@ -1,4 +1,3 @@
-import React from "react";
 import { SiGooglekeep } from "react-icons/si";
 import { VscThreeBars } from "react-icons/vsc";
 import keep from "../../public/keep.png";
@@ -6,9 +5,10 @@ import { IoMdRefresh, IoMdSettings } from "react-icons/io";
 import { IoSearch } from "react-icons/io5";
 import { TfiViewList } from "react-icons/tfi";
 import { CgMenuGridO } from "react-icons/cg";
-function Navbar() {
+
+ function Navbar() {
   return (
-    <nav className="w-full h-14 border-b px-7 py-3 bg-gray-900 z-50 sticky top-0 left-0 flex items-center gap-5">
+    <nav className="will-change-auto h-14 border-b px-7 py-3 bg-gray-900 z-50 sticky top-0 left-0 flex items-center gap-5">
       
       <VscThreeBars className="text-2xl text-white" />
      <div className="flex gap-1 items-center">

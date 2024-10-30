@@ -1,8 +1,8 @@
 const Todo = require("../model/todo.schema");
 exports.create_todo = async (req, res) => {
-  const { title, content,labels,background_color,pinned,completed,user_id, } = req.body;
+  const { title, content, labels, background_color, pinned, completed, user_id, } = req.body;
   try {
-    const newTodo = await Todo.create({title,content,labels,background_color,pinned,completed,user_id});
+    const newTodo = await Todo.create({ title, content, labels, background_color, pinned, completed, user_id });
     return res.status(200).json({
       success: true,
       message: "Todo created successfully",
@@ -19,7 +19,7 @@ exports.get_todo = async (req, res) => {
   const { userId } = req.query;
 
   try {
-    const todo = await Todo.find({ user_id: userId }).sort({createAt:-1});
+    const todo = await Todo.find({ user_id: userId }).sort({ createAt: -1 });
     return res.status(200).json({
       success: true,
       message: "Todo fetched successfully",
@@ -39,7 +39,7 @@ exports.delete_todo = async (req, res) => {
       success: false,
       message: "Todo_id is required",
     });
-    // throw new Error("Todo_id is required");  //if you want to throw an error instead of returning a 400 status code.
+
   }
   try {
     const todo = await Todo.findByIdAndDelete(todo_id);
@@ -48,7 +48,7 @@ exports.delete_todo = async (req, res) => {
         success: false,
         message: "Todo not found",
       });
-      // throw new Error("Todo not found");  //if you want to throw an error instead of returning a 404 status code.
+     
     }
     return res.status(200).json({
       success: true,
@@ -62,14 +62,17 @@ exports.delete_todo = async (req, res) => {
   }
 };
 exports.update_todo = async (req, res) => {
-  const {title,content,labels,background_color,pinned,completed,userId} = req.body;
+  const { title, content, labels, removelabel, background_color, pinned, completed, userId } = req.body;
   const { todo_id } = req.query;
   const updated_object = {};
   if (title) {
     updated_object.title = title;
   }
   if (labels) {
-    updated_object.labels = labels;
+    updated_object.$push = { labels: labels }
+  }
+  if (removelabel) {
+    updated_object.$pull = { labels: removelabel }
   }
   if (background_color) {
     updated_object.background_color = background_color;
@@ -87,7 +90,7 @@ exports.update_todo = async (req, res) => {
     updated_object.user_id = userId;
   }
   try {
-    const updated_todo = await Todo.findByIdAndUpdate(todo_id, updated_object, {new: true, });
+    const updated_todo = await Todo.findByIdAndUpdate(todo_id, updated_object, { new: true, });
     return res.status(200).json({
       success: true,
       message: "Todo updated successfully",

@@ -1,85 +1,165 @@
 "use client";
 
 import { create_todo } from "@/constants";
-import { createTodo, fetchTodos } from "@/networks/todo_network";
+import {
+  createTodo,
+  deletetodo,
+  fetchTodos,
+  updateTodo,
+} from "@/networks/todo_network";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { HiOutlinePaintBrush } from "react-icons/hi2";
 import { IoIosCheckboxOutline, IoIosColorPalette } from "react-icons/io";
 import { MdOutlinePhotoSizeSelectActual } from "react-icons/md";
+import { DotLoader } from "react-spinners";
+import { FaPen } from 'react-icons/fa'
+import { FaP } from "react-icons/fa6";
+import { TbArrowsMaximize } from "react-icons/tb";
 
 function page() {
-  const [allTodos, setAllTodos] = useState([]);
-  const [clickInput, setClickInput] = useState<boolean>(false);
-  const [title, setTitle] = useState<string>("");
-  const [content, setContent] = useState<string>("");
-  const [hovered, setHovered] = useState<number>(-1);
+  // State variables for managing todos and UI interactions
+  const [allTodos, setAllTodos] = useState([]); // Store all todos
+  const [clickInput, setClickInput] = useState<boolean>(false); // Track if input for new todo is active
+  const [title, setTitle] = useState<string>(""); // Store title for the new todo
+  const [content, setContent] = useState<string>(""); // Store content for the new todo
+  const [hovered, setHovered] = useState<number>(-1); // Track hovered todo for UI effects
+  const [loading, setLoading] = useState<boolean>(false); // Track loading state
+  const [showDropDown, setDropDown] = useState<number>(-1); // Control dropdown visibility for each todo
+  const [showLabel, setshowLabel] = useState<number>(-1); // Control label input visibility for each todo
+  const [labelName, setLabelName] = useState<string>(""); // Store label name for adding to todo
+  const [removeLabel, setRemoveLabel] = useState<string>(""); // Track label to remove (not currently used)
+  const [showCross, setShowCross] = useState<string>(""); // Track which label's remove button to show
+  const [editTodo, setEditTodo] = useState<string>(""); //handle edit functionality
+  const [editTitle, setEditTitle] = useState<string>(""); //handle edit title
+  const [editContent, setEditContent] = useState<string>("");//handle Edit content
+  const [zoomid, setZoomId] = useState<string>("");
+
   useEffect(() => {
-    getTodos();
+    getTodos(); // Fetch todos on component mount
   }, []);
-const colorRef=useRef<HTMLInputElement>(null)
+
+  const colorRef = useRef<HTMLInputElement>(null); // Reference for color input
 
   async function getTodos() {
-    const response = await fetchTodos({});
+    setLoading(true); // Start loading
+    const response = await fetchTodos({}); // Fetch todos
     console.log("response------->", response);
     if (response.success) {
-      setAllTodos(response.data);
+      setAllTodos(response.data); // Set todos in state if fetch is successful
     } else {
-      console.log("error in fetching todos.");
+      console.log("error in fetching todos."); // Log error
     }
+    setLoading(false); // Stop loading
   }
+
   async function handleAddTodo() {
     const body = {
       title,
       content,
-      user_id: "6708dec58612c5993cfd51f0",
+      user_id: "6708dec58612c5993cfd51f0", // Placeholder user ID (consider changing to dynamic)
     };
-    const res: any = await createTodo(body); //res=response.data
+    setLoading(true); // Start loading
+    const res: any = await createTodo(body); // Create a new todo
+
     if (res.success) {
-      console.log("todo added successfully");
-      setTitle("");
-      setContent("");
-      getTodos();
+      console.log("todo added successfully"); // Log success
+      setTitle(""); // Clear title input
+      setContent(""); // Clear content input
+      getTodos(); // Refresh todos
     } else {
-      console.log("error in adding todo");
+      console.log("error in adding todo"); // Log error
+    }
+    setLoading(false); // Stop loading
+  }
+
+  async function handleDeleteTodo(id: string) {
+    const res = await deletetodo({ todo_id: id }); // Delete todo by ID
+    if (res.success) {
+      getTodos(); // Refresh todos if deletion is successful
     }
   }
-  
+
+  async function handleUpdateTodo(todo_id: string) {
+    const params = {
+      todo_id,
+      body: {
+        labels: labelName, // Label to add
+      },
+    };
+    const response = await updateTodo(params); // Update todo with new label
+    setshowLabel(-1); // Hide label input after adding
+    if (response.success) {
+      getTodos(); // Refresh todos if update is successful
+    }
+  }
+
+  async function removeLabels(todo_id: string, label: string) {
+    const params = {
+      todo_id,
+      body: {
+        removelabel: label, // Label to remove
+      },
+    };
+    const response = await updateTodo(params); // Update todo to remove label
+
+    if (response.success) {
+      getTodos(); // Refresh todos if update is successful
+    }
+  }
+
+
+  async function handleEditTodo(todo_id: string) {
+    const params = {
+      todo_id,
+      body: {
+        title: editTitle, // Use edited title
+        content: editContent, // Use edited content
+      },
+    };
+    const response = await updateTodo(params); // Update todo with new title and content
+    if (response.success) {
+      getTodos(); // Refresh todos if update is successful
+    }
+    setEditTodo(""); // Exit editing mode
+  }
+
 
   return (
-    <div className=" flex flex-col  bg-gray-900 flex-1">
-      <div className=" flex bg-gray-900 w-full  justify-center h-fit p-4">
-        <div className="flex bg-gray-900 justify-center items-center border w-[60%] rounded-lg border-white px-2 gap-5 ">
+    <div className="flex flex-col bg-gray-900 flex-1 w-auto h-auto" >
+      <div className="flex bg-gray-900 w-full justify-center h-fit p-4">
+        <div className="flex bg-gray-900 justify-center items-center  border w-[60%] rounded-lg border-white px-2 gap-5 ">
           {!clickInput ? (
             <input
-              className="text-white flex-1  w-[50%] p-5 rounded-md bg-gray-900 outline-none"
+              className="text-white flex-1 w-[50%] p-5 rounded-md bg-gray-900 outline-none"
               placeholder="Take a note..."
-              onClick={() => setClickInput(true)}
+              onClick={() => setClickInput(true)} // Enable input on click
             />
           ) : (
             <div className="flex flex-col text-white w-full py-2 ">
               <input
                 className="bg-transparent text-white w-full px-5 py-3 outline-none"
                 placeholder="Enter title"
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => setTitle(e.target.value)} // Update title on input change
                 value={title}
               />
               <input
                 className="bg-transparent text-white w-full px-5 py-4 outline-none"
                 placeholder="Take a note..."
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e) => setContent(e.target.value)} // Update content on input change
                 value={content}
               />
-              <div className="flex gap-3 self-end">
+              <div className="flex gap-3 self-end"
+                onMouseOut={() => setClickInput(false)}>
                 <button
-                  onClick={() => setClickInput(false)}
+                  onClick={() => setClickInput(false)} // Close input on button click
                   className="text-white p-2 rounded-md border-blue-400 bg-blue-100 bg-opacity-30"
                 >
                   Close
                 </button>
                 <button
-                  onClick={handleAddTodo}
+                  onClick={handleAddTodo} // Add todo on button click
                   className="text-white p-2 rounded-md border-blue-400 bg-blue-100 bg-opacity-30"
                 >
                   Add
@@ -87,38 +167,183 @@ const colorRef=useRef<HTMLInputElement>(null)
               </div>
             </div>
           )}
-          <IoIosCheckboxOutline className='text-2xl text-white' />
-          <HiOutlinePaintBrush className='text-white text-2xl' />
-          <MdOutlinePhotoSizeSelectActual className='text-white text-2xl' />
+          <IoIosCheckboxOutline className="text-2xl text-white" />
+          <HiOutlinePaintBrush className="text-white text-2xl" />
+          <MdOutlinePhotoSizeSelectActual className="text-white text-2xl" />
         </div>
       </div>
-      <div className="text-white p-4 max-w-full gap-3 columns-4">
-        {allTodos &&
+
+      {loading && (
+        <div className="h-auto will-change-auto flex justify-center items-center ">
+          <DotLoader size={50} color="#FFFFFF" /> {/* Loading spinner */}
+        </div>
+      )}
+
+      <div className="text-white  flex p-4 will-change-auto gap-3 flex-wrap  h-auto">
+        {!loading &&
+          allTodos &&
           allTodos.map((todo: any) => {
             return (
+
               <div
-                onMouseOver={() => setHovered(todo._id)}
-          
-                className="flex flex-col gap-2 border-2 mb-3 w-full  border-white p-2 break-inside-avoid rounded-lg  "
+                onMouseOver={() => setHovered(todo._id)} // Set hovered todo on mouse over
+                className={`flex flex-col flex-wrap gap-5 border-2 h-auto ${zoomid === todo._id ? 'w-[350px]' : 'w-[280px]'} border-white p-2 break-inside-avoid rounded-lg`}
               >
-                <h1 className="text-xl font-bold">{todo.title}</h1>
-                <div className="flex gap-2">
-                  {todo.labels.map((label: any) => (
-                    <p className="p-2 rounded-md border-blue-400 bg-blue-100 bg-opacity-30">
+
+
+
+                {editTodo === todo._id && (
+                  <div className="flex flex-col gap-1 flex-wrap  border-2 h-auto w-[300px] text-white bg-gray-600 rounded-md top-0 left-0  border-white">
+                    <input
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)} // Update edited title
+                      className=" p-2 text-xl font-bold text-white bg-gray-600 rounded-md border-1 border-white"
+                      placeholder="Edit title..."
+                    />
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)} // Update edited content
+                      className="w-auto h-[120px] p-2 text-white text-md bg-gray-600 rounded-md border-1 border-white"
+                      placeholder="Edit content..."
+                      hight-20px
+                      width-20px
+                    />
+                    <button
+                      onClick={() => {
+                        handleEditTodo(todo._id)
+                      }}// Save edits
+                      className="bg-blue-500 text-white p-2 h-10 rounded-md text-md border-1 border-white"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditTodo("")
+                      }
+                      } // Cancel editing
+                      className="bg-red-500 text-white p-2 h-10 rounded-md text-md border-1 border-white pb-1"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+
+
+
+
+                <div className="flex flex-row justify-between">
+                  <h1 className="text-xl font-bold">{todo.title}</h1>
+                  <button className="h-10 w-10 rounded-full hover:bg-gray-500 flex justify-center items-center" >
+                    <FaPen
+                      onClick={() => {
+                        setEditTodo(todo._id); // Enable editing mode
+                        setEditTitle(todo.title); // Set current title in edit mode
+                        setEditContent(todo.content); // Set current content in edit mode
+                      }}
+                    />
+                  </button>
+
+                </div>
+
+                <div className="flex gap-2 flex-wrap">
+                  {todo.labels.map((label: any, index: number) => (
+                    <p
+                      className="p-1 rounded-md border-blue-400 border-2 bg-blue-100 bg-opacity-30 "
+                      onMouseOver={() => setShowCross(`${todo._id}${index}`)} // Show remove button on hover
+                      onMouseOut={() => setShowCross("")}
+                    >
                       {label}
+                      {showCross === `${todo._id}${index}` && (
+                        <button
+                          onClick={() => removeLabels(todo._id, label)} // Remove label on button click
+                          className="bg-red-500 text-black m-2 text-xs rounded-md"
+                        >
+                          X
+                        </button>
+                      )}
                     </p>
                   ))}
                 </div>
-                <p className="break-all">{todo.content}</p>
-                {hovered===todo._id && <div className="flex items-center justify-end gap-3 text-2xl">
-                  <label>
-                    <input ref={colorRef} type="color" className="hidden"/>
-                    <button onClick={()=>colorRef.current?.click()}
-                    className="h-10 w-10 rounded-full hover:bg-gray-500 flex justify-center items-center"><IoIosColorPalette /></button>
+                <p className={`${zoomid === todo._id ? 'line-clamp-none' : 'line-clamp-4'}`}>{todo.content}</p>
+
+                {hovered === todo._id && (
+                  <div className="flex items-center justify-end gap-3 text-2xl">
+                    <button  // maximize  menu on button click
+                      onClick={() => setZoomId(todo._id)}
+                      className="h-10 w-10 rounded-full hover:bg-gray-500 flex justify-center items-center">
+                      {zoomid === todo._id ? '' : < TbArrowsMaximize />}
+                    </button>
+
+                    <label>
+                      <input ref={colorRef} type="color" className="hidden" />
+                      <button
+                        onClick={() => colorRef.current?.click()} // Open color picker on button click
+                        className="h-10 w-10 rounded-full hover:bg-gray-500 flex justify-center items-center"
+                      >
+                        <IoIosColorPalette />
+                      </button>
                     </label>
-                
-                 <button className="h-10 w-10 rounded-full hover:bg-gray-500 flex justify-center items-center"> <BsThreeDotsVertical /></button>
-                  </div>}
+                    <div className="relative">
+                      <button
+                        onClick={() => setDropDown(todo._id)} // Toggle dropdown menu on button click
+                        className="h-10 w-10 rounded-full hover:bg-gray-500 flex justify-center items-center"
+                      >
+                        <BsThreeDotsVertical />
+                      </button>
+                      {showDropDown === todo._id && (
+                        <ul className="p-3 h-32 bg-gray-600 rounded-md text-sm absolute top-[100%] right-0 flex flex-col justify-center gap-4 items-center">
+                          <li
+                            onClick={() => handleDeleteTodo(todo._id)} // Delete todo on menu item click
+                            className="whitespace-nowrap cursor-pointer"
+                          >
+                            delete
+                          </li>
+                          <li
+                            onClick={() => {
+                              setshowLabel(todo._id); // Show label input on menu item click
+                              setDropDown(-1); // Hide dropdown
+                            }}
+                            className="whitespace-nowrap cursor-pointer"
+                          >
+                            Add label
+                          </li>
+                        </ul>
+                      )}
+
+                      {showLabel === todo._id && (
+                        <ul className="p-3 h-32 bg-gray-600 rounded-md text-sm absolute top-[100%] right-0 flex flex-col justify-center gap-4 items-center">
+                          <input
+                            onChange={(e) => setLabelName(e.target.value)} // Update label name on input change
+                            value={labelName}
+                            className="p-4 m-4 bg-transparent text-white"
+                            placeholder="add label...."
+                          />
+                          <button
+                            onClick={() => {
+                              handleUpdateTodo(todo._id); // Add label on button click
+                            }}
+                            className="whitespace-nowrap cursor-pointer"
+                          >
+                            Add label
+                          </button>
+                        </ul>
+                      )}
+
+                    </div>
+                  </div>
+                )}
+
+                {zoomid === todo._id && (
+                  <div className="flex justify-start flex-wrap h-auto w-[340px] rounded-md text-white bg-gray-900 border-white border-2">
+                    <button
+                      onClick={() => setZoomId("")}
+                      className="h-[50px] w-[340px] bg-blue-500 rounded-b-md"
+                    >
+                      Close
+                    </button>
+                  </div>
+
+                )}
               </div>
             );
           })}

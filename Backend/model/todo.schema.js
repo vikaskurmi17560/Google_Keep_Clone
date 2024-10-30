@@ -29,7 +29,7 @@ const todo_schema=new mongoose.Schema({
         required:true,
     }
 },{
-    timestamps: true, // creates createdAt and updatedAt fields automatically
+    timestamps: true, 
 })
 const todo = mongoose.model('todo', todo_schema)
 module.exports=todo;

@@ -19,7 +19,7 @@ exports.get_todo = async (req, res) => {
   const { userId } = req.query;
 
   try {
-    const todo = await Todo.find({ user_id: userId }).sort({ createAt: -1 });
+    const todo = await Todo.find({ user_id: userId }).sort({ createdAt: -1 });
     return res.status(200).json({
       success: true,
       message: "Todo fetched successfully",

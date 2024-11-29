@@ -1,4 +1,15 @@
 const User = require("../model/user.schema")
+
+exports.create_user = async (req, res) => {
+    const { name, email, password } = req.body;
+    const new_user = await User.create({ name, email, password });
+    return res.status(200).json({
+        success: true,
+        data: new_user,
+        message: "Created Successfully",
+    })
+}
+
 exports.get_user = async (req, res) => {
     try {
         //to get data of individual user using user_id
@@ -25,15 +36,6 @@ exports.get_user = async (req, res) => {
             message: error.message,
         })
     }
-}
-exports.create_user = async (req, res) => {
-    const { name, email, password } = req.body;
-    const new_user = await User.create({ name, email, password });
-    return res.status(200).json({
-        success: true,
-        data: new_user,
-        message: "Created Successfully",
-    })
 }
 
 exports.update_user = async (req, res) => {

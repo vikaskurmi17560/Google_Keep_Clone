@@ -16,6 +16,11 @@ const user_schema=new mongoose.Schema({
         required:true,
         minlength:8,
        // select:false,//removes password from query
+    },
+    confirm_password:{
+        type:String,
+        required:true,
+        minlength:8,
     }
    
 },{
